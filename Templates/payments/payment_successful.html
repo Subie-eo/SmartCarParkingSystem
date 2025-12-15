@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Payment Successful</h2>
+<p>Booking ID: {{ booking.id }}</p>
+<p>Receipt: {{ booking.mpesa_receipt_no }}</p>
+<p>Your booking has been confirmed. Drive safely!</p>
+{% endblock %}

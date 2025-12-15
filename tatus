@@ -1,0 +1,18 @@
+[35m.env.example[m[36m:[m[32m19[m[36m:[m[1;31mSENDGRID[m_API_KEY=your_sendgrid_api_key_here
+[35mCarParking/email_backends.py[m[36m:[m[32m15[m[36m:[m    and provide `[1;31mSENDGRID[m_API_KEY` in the environment.
+[35mCarParking/email_backends.py[m[36m:[m[32m19[m[36m:[m    [1;31mSENDGRID[m_URL = 'https://api.sendgrid.com/v3/mail/send'
+[35mCarParking/email_backends.py[m[36m:[m[32m25[m[36m:[m        api_key = os.getenv('[1;31mSENDGRID[m_API_KEY')
+[35mCarParking/email_backends.py[m[36m:[m[32m27[m[36m:[m            raise RuntimeError('[1;31mSENDGRID[m_API_KEY not set')
+[35mCarParking/email_backends.py[m[36m:[m[32m47[m[36m:[m            req = Request(self.[1;31mSENDGRID[m_URL, data=data, method='POST')
+[35mscripts/sendgrid_direct_test.py[m[36m:[m[32m5[m[36m:[m# Read .env and extract [1;31mSENDGRID[m_API_KEY
+[35mscripts/sendgrid_direct_test.py[m[36m:[m[32m10[m[36m:[m        m = re.match(r'^\s*[1;31mSENDGRID[m_API_KEY\s*=\s*(.*)\s*$', line)
+[35mscripts/sendgrid_direct_test.py[m[36m:[m[32m20[m[36m:[m    print('[1;31mSENDGRID[m_API_KEY not found in .env')
+[35mscripts/sendgrid_direct_test.py[m[36m:[m[32m23[m[36m:[m    print('[1;31mSENDGRID[m_API_KEY is empty in .env')
+[35mscripts/sendgrid_test.py[m[36m:[m[32m5[m[36m:[mAPI_KEY = os.getenv('[1;31mSENDGRID[m_API_KEY')
+[35mscripts/sendgrid_test.py[m[36m:[m[32m15[m[36m:[m            if '[1;31mSENDGRID[m' in text:
+[35mscripts/sendgrid_test.py[m[36m:[m[32m16[m[36m:[m                print('Found [1;31mSENDGRID[m in .env')
+[35mscripts/sendgrid_test.py[m[36m:[m[32m19[m[36m:[m                    if '[1;31mSENDGRID[m' in raw_line:
+[35mscripts/sendgrid_test.py[m[36m:[m[32m20[m[36m:[m                        print('Context around [1;31mSENDGRID[m line index', i)
+[35mscripts/sendgrid_test.py[m[36m:[m[32m31[m[36m:[m                        if k == '[1;31mSENDGRID[m_API_KEY':
+[35mscripts/sendgrid_test.py[m[36m:[m[32m33[m[36m:[m                            print('Loaded [1;31mSENDGRID[m_API_KEY from .env (length', len(API_KEY), ')')
+[35mscripts/sendgrid_test.py[m[36m:[m[32m42[m[36m:[m    print('[1;31mSENDGRID[m_API_KEY not set')

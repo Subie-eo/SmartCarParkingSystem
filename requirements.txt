@@ -1,0 +1,5 @@
+pillow
+cloudinary
+django
+pytjon-decouple
+dotenv

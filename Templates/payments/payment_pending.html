@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Payment Pending</h2>
+<p>Booking ID: {{ booking.id }}</p>
+<p>Amount: KES {{ booking.total_fee }}</p>
+<p>A payment prompt has been sent to your phone. Please complete the payment to confirm the booking.</p>
+<p>If you don't receive the prompt, try again or contact support.</p>
+{% endblock %}

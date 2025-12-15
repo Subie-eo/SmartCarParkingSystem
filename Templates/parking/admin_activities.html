@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Admin Activities{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-2xl font-bold text-white mb-4">Admin Activities</h1>
+    <div class="bg-slate-800 p-4 rounded-lg">
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card p-3">
+                    <div class="small text-muted">Bookings Today</div>
+                    <div class="h4 text-white">{{ bookings_today|default:0 }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card p-3">
+                    <div class="small text-muted">Revenue Today (KES)</div>
+                    <div class="h4 text-white">{{ revenue_today|floatformat:2 }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card p-3">
+                    <div class="small text-muted">Peak Hour (Today)</div>
+                    <div class="h5 text-white">
+                        {% if peak_hour is not None %}
+                            {{ peak_hour }}:00 — {{ peak_count }} bookings
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bookings by Hour Chart (visual summary for admins) -->
+        <div class="mb-4">
+            <!-- Canvas element populated by Chart.js using `bookings_by_hour` context -->
+            <canvas id="bookingsHourChart" width="800" height="250"></canvas>
+        </div>
+
+        <!-- Chart.js CDN and renderer: builds a simple bar chart showing bookings per hour -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            (function(){
+                try{
+                    const ctx = document.getElementById('bookingsHourChart');
+                    if(!ctx) return;
+
+                    const labels = [
+                        {% for b in bookings_by_hour %}{% if not forloop.first %}, {% endif %}"{{ b.hour }}"{% endfor %}
+                    ];
+                    const values = [
+                        {% for b in bookings_by_hour %}{% if not forloop.first %}, {% endif %}{{ b.count }}{% endfor %}
+                    ];
+
+                    new Chart(ctx.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Bookings (today)',
+                                data: values,
+                                backgroundColor: 'rgba(245,158,11,0.85)',
+                                borderColor: 'rgba(245,158,11,1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                }catch(e){console.warn('chart render failed', e)}
+            })();
+        </script>
+        {% if activities %}
+            <ul class="space-y-2">
+                {% for a in activities %}
+                    <li class="p-2 border-b border-slate-700">
+                        <p class="text-slate-300 text-sm">{{ a.action_time }} — <strong>{{ a.user.get_username }}</strong> — {{ a.get_action_flag_display }} — {{ a.change_message }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-slate-400">No admin activities found.</p>
+        {% endif %}
+    </div>
+    <a href="{% url 'parking:admin_booking_list' %}" class="mt-6 inline-block text-amber-400">&larr; Back</a>
+</div>
+{% endblock %}

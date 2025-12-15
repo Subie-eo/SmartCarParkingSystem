@@ -1,0 +1,432 @@
+<!-- Template Name: Driver Dashboard (Main User Interface) -->
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Driver Dashboard{% endblock %}
+
+{% block navbar_content %}
+<ul class="navbar-nav me-auto mb-2 mb-md-0">
+    <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<div class="container dashboard-wrap">
+    <div class="mx-auto" style="max-width:1300px">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center dashboard-header">
+            <div class="d-flex align-items-center">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" class="me-3" xmlns="http://www.w3.org/2000/svg"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <h1 class="h3 mb-0">Driver Dashboard</h1>
+            </div>
+            <div>
+                {% if user.is_authenticated %}
+                    <span class="text-warning">Hello, <strong class="text-light">{{ user.username }}</strong></span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if 'error' in message.tags %}alert-danger{% elif 'success' in message.tags %}alert-success{% else %}alert-info{% endif %}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Statistics Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="small text-muted">Total Slots</div>
+                            <div class="h4 mb-0 text-light">{{ total_slots }}</div>
+                        </div>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="small text-muted">Available</div>
+                            <div class="h4 mb-0 text-success">{{ available_count }}</div>
+                        </div>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5"><path d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="small text-muted">Occupied</div>
+                            <div class="h4 mb-0 text-danger">{{ occupied_count }}</div>
+                        </div>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="small text-muted">Availability</div>
+                            <div class="h4 mb-0 text-warning">{{ availability_percentage|floatformat:0 }}%</div>
+                        </div>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Your Status & Recent Bookings -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-lg-4">
+                <div class="profile-card">
+                    <h2 class="h5 mb-2">My Profile</h2>
+                    <p class="mb-2"><strong>Vehicle:</strong> <code class="text-warning">{% if user.is_authenticated %}{{ user.vehicle_plate }}{% endif %}</code></p>
+                    <p class="text-muted small mb-3">Signed in as Driver. Your M-Pesa is linked for quick checkout.</p>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="small text-muted me-2">Current Status:</div>
+                        {% if occupancy_status == 'FREE' %}
+                            <span class="badge bg-success">FREE</span>
+                        {% elif occupancy_status == 'PENDING' %}
+                            <span class="badge bg-warning">PENDING PAYMENT</span>
+                        {% elif occupancy_status == 'OCCUPIED' %}
+                            <span class="badge bg-danger">OCCUPYING SLOT</span>
+                        {% endif %}
+                    </div>
+                    {% if occupancy_status == 'PENDING' %}
+                        <div class="alert alert-warning small mb-3">
+                            You have a pending payment for Slot #{{ pending_booking.slot.slot_id }}.
+                            <form method="post" action="{% url 'parking:cancel_booking' pending_booking.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-warning ms-2">Cancel This Booking</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                    {% if occupancy_status == 'OCCUPIED' %}
+                        <form method="post" action="{% url 'parking:leave_slot' %}" onsubmit="return confirm('Confirm you are leaving the slot?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger w-100">I'm Leaving — Free My Slot</button>
+                        </form>
+                        <div class="mt-2 small text-muted">Press this when you exit the parking to free your slot immediately.</div>
+                    {% endif %}
+
+                    {% if request.session.last_leave %}
+                        <div class="mt-3">
+                            <form method="post" action="{% url 'parking:undo_leave' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-light w-100">Undo Last Leave</button>
+                            </form>
+                            <div class="small text-muted mt-1">Undo your last "leave" action (available briefly).</div>
+                        </div>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'driver_update' %}" class="btn btn-sm btn-outline-warning w-100">Edit Profile</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-8">
+                <div class="profile-card">
+                    <h3 class="h5 mb-3">Recent Bookings</h3>
+                    {% if user_bookings %}
+                        <div class="list-group list-group-flush">
+                            {% for booking in user_bookings %}
+                                <div class="list-group-item bg-transparent border-bottom border-secondary pb-2 mb-2">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="fw-bold">Slot #{{ booking.slot.slot_id }}</div>
+                                            <div class="small text-muted">{{ booking.start_time|date:"M d, H:i" }} → {{ booking.end_time|date:"H:i" }}</div>
+                                        </div>
+                                        <span class="badge {% if booking.payment_status == 'PAID' %}bg-success{% elif booking.payment_status == 'PENDING' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ booking.get_payment_status_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted small mb-0">No bookings yet. Start by booking a parking slot!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Parking Grid - All Slots -->
+        <!--
+            Parking grid renders every `ParkingSlot` instance as a square box.
+            - `.free` class indicates available slots (click to book)
+            - `.occupied` class indicates currently taken slots
+            The `data-book-slot` attribute is used by the JS above to open the
+            booking modal and target the booking POST to `/parking/book/<slot_id>/`.
+        -->
+        <div class="card bg-secondary p-3 mb-4">
+            <div class="parking-container">
+                <!-- Simple grid-only view (no SVG map) restored per request -->
+                <div style="height:12px"></div>
+            <div class="mb-3 d-flex justify-content-between align-items-start">
+                <div>
+                    <h2 class="h5 text-warning mb-1">🅿️ Parking Lot Map</h2>
+                    <p class="small text-muted mb-0">All available slots with real-time status. Green = Available | Orange = Pending | Red = Occupied</p>
+                </div>
+                <div class="map-toolbar text-end">
+                    <div class="legend mt-2">
+                        <span class="legend-item"><svg width="14" height="8"><rect width="14" height="8" fill="#10b981" rx="2"/></svg> Free</span>
+                        <span class="legend-item"><svg width="14" height="8"><rect width="14" height="8" fill="#f59e0b" rx="2"/></svg> Pending</span>
+                        <span class="legend-item"><svg width="14" height="8"><rect width="14" height="8" fill="#ef4444" rx="2"/></svg> Occupied</span>
+                    </div>
+                </div>
+            </div>
+
+                <div class="parking-grid">
+                {% if all_slots %}
+                    {% for level, slots in ordered_slots_by_level %}
+                        <div class="level-row" data-level="{{ level }}">
+                            <div class="level-header small text-muted mb-2">{{ level }}</div>
+                            <div class="level-grid">
+                                {% for slot in slots %}
+                                    <div class="slot-box {% if slot.is_occupied %}occupied{% else %}free{% endif %}" data-slot-id="{{ slot.slot_id }}">
+                                        <div class="slot-id">{{ slot.slot_id }}</div>
+                                        <div class="small text-muted">{{ slot.level }}</div>
+                                        <div class="slot-status">
+                                            {% if slot.is_occupied %}
+                                                <strong>BOOKED</strong>
+                                            {% else %}
+                                                <strong>FREE</strong>
+                                            {% endif %}
+                                        </div>
+                                        <div class="small text-muted" style="margin-bottom:10px;">{{ slot.get_pricing_category_display }}</div>
+                                        <div class="slot-action">
+                                            {% if not slot.is_occupied %}
+                                                <a href="#" data-book-slot="{{ slot.slot_id }}" class="book-btn">Book</a>
+                                            {% else %}
+                                                <span class="disabled">Unavail.</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    {# Render placeholder slots so the map looks populated in dev #}
+                    <div class="level-row">
+                        <div class="level-grid">
+                        {% for i in placeholder_slots %}
+                            <div class="slot-box free placeholder" data-slot-id="P{{ i }}">
+                                <div class="slot-id">P{{ i }}</div>
+                                <div class="slot-status"><strong>FREE</strong></div>
+                                <div class="small text-muted" style="margin-bottom:10px;">Regular</div>
+                                <div class="slot-action"><a href="#" class="book-btn">Book</a></div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="row g-3">
+            <div class="col-12 col-sm-6">
+                <a href="{% url 'parking:past_reservations' %}" class="text-decoration-none">
+                    <div class="profile-card">
+                        <h3 class="h6 mb-1 text-warning">📋 Booking History</h3>
+                        <p class="text-muted small mb-0">View all your past reservations and payments.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6">
+                <div class="profile-card">
+                    <h3 class="h6 mb-1 text-warning">💡 Tip</h3>
+                    <p class="text-muted small mb-0">Book ahead to secure your preferred parking spot!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal (Bootstrap) -->
+        <!--
+                Booking Modal
+                - The form inside posts to `/parking/book/<slot_id>/` which is set
+                    dynamically when a user clicks a slot (see page JS).  The view
+                    will create a Booking and attempt to initiate payment.
+        -->
+        <div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Book Slot <span id="modal-slot-id" class="text-warning"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="booking-form" method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <input type="hidden" name="slot_id" id="booking-slot-input">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Start Time</label>
+                            {{ booking_form.start_time }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Duration (hours)</label>
+                            {{ booking_form.duration_hours }}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Confirm Booking</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const bookingModalEl = document.getElementById('bookingModal');
+    const bookingModal = bookingModalEl ? new bootstrap.Modal(bookingModalEl) : null;
+    const modalSlotId = document.getElementById('modal-slot-id');
+    const bookingSlotInput = document.getElementById('booking-slot-input');
+
+    document.querySelectorAll('[data-book-slot]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const slotId = btn.getAttribute('data-book-slot');
+            if (modalSlotId) modalSlotId.textContent = slotId;
+            if (bookingSlotInput) bookingSlotInput.value = slotId;
+            // Ensure booking form posts to the slot-specific initiate endpoint
+            const bookingFormEl = document.getElementById('booking-form');
+            if (bookingFormEl) {
+                bookingFormEl.action = `/parking/book/${slotId}/`;
+            }
+            if (bookingModal) bookingModal.show();
+        });
+    });
+    // Map view toggle removed — dashboard uses the horizontal level rows by default.
+
+    // Polling for slot status changes and animate vehicle arrival/removal
+    const SLOT_API = '{% url "parking:slot_statuses_api" %}';
+    let lastStatuses = {};
+
+    // Vehicle visuals removed — polling will only toggle bay rect styling and slot cards.
+
+    async function pollSlots() {
+        try {
+            const res = await fetch(SLOT_API, {cache: 'no-store'});
+            if (!res.ok) return;
+            const json = await res.json();
+            const slots = json.slots || [];
+            slots.forEach(s => {
+                const id = s.slot_id;
+                const bay = document.querySelector(`[data-slot="${id}"]`);
+                if (!bay) return;
+                const prev = lastStatuses[id];
+                const nowOcc = s.is_occupied;
+                // initial set
+                if (typeof prev === 'undefined') {
+                    lastStatuses[id] = nowOcc;
+                    // nothing else
+                    return;
+                }
+                if (prev === nowOcc) return; // no change
+                lastStatuses[id] = nowOcc;
+                if (nowOcc) {
+                    // mark bay rect as occupied (red)
+                    const bbox = bay.querySelector('rect');
+                    if (bbox) {
+                        bbox.setAttribute('fill', '#ffedea');
+                        bbox.setAttribute('stroke', '#ef4444');
+                        bbox.classList.add('occupied-flash');
+                        setTimeout(() => bbox.classList.remove('occupied-flash'), 700);
+                    }
+                    bay.dataset.occupied = '1';
+                    // update grid card if present
+                    const card = document.querySelector(`.slot-box[data-slot-id="${id}"]`);
+                    if (card) {
+                        card.classList.remove('free'); card.classList.add('occupied');
+                        const statusEl = card.querySelector('.slot-status'); if (statusEl) statusEl.innerHTML = '<strong>BOOKED</strong>';
+                        const action = card.querySelector('.slot-action'); if (action) { action.innerHTML = '<span class="disabled">Unavail.</span>'; }
+                    }
+                } else {
+                    // mark bay rect as free (green)
+                    const bbox = bay.querySelector('rect');
+                    if (bbox) {
+                        bbox.setAttribute('fill', '#071226');
+                        bbox.setAttribute('stroke', '#10b981');
+                    }
+                    bay.dataset.occupied = '0';
+                    const card = document.querySelector(`.slot-box[data-slot-id="${id}"]`);
+                    if (card) {
+                        card.classList.remove('occupied'); card.classList.add('free');
+                        const statusEl = card.querySelector('.slot-status'); if (statusEl) statusEl.innerHTML = '<strong>FREE</strong>';
+                        const action = card.querySelector('.slot-action'); if (action) { action.innerHTML = `<a href="#" data-book-slot="${id}" class="book-btn">Book</a>`; }
+                    }
+                }
+            });
+        } catch (e) {
+            // silent fail
+        }
+    }
+
+    // warm up lastStatuses
+    document.querySelectorAll('.bay').forEach(b => { lastStatuses[b.dataset.slot] = b.dataset.occupied === '1'; });
+    setInterval(pollSlots, 8000);
+
+    // Position HTML overlays over the SVG according to viewBox scaling
+    const svgEl = document.querySelector('.parking-map-bg');
+    const overlays = Array.from(document.querySelectorAll('.slot-overlay'));
+
+    function positionOverlays(){
+        if (!svgEl) return;
+        const container = svgEl.parentElement; // parking-container
+        const containerRect = container.getBoundingClientRect();
+        // helper: convert an SVG point (in viewBox coords) to client coordinates
+        function svgPointToClient(x, y){
+            try{
+                const pt = svgEl.createSVGPoint();
+                pt.x = x; pt.y = y;
+                const screenCTM = svgEl.getScreenCTM();
+                if (!screenCTM) return null;
+                const transformed = pt.matrixTransform(screenCTM);
+                return { x: transformed.x, y: transformed.y };
+            }catch(e){ return null; }
+        }
+
+        overlays.forEach(el=>{
+            const sx = parseFloat(el.dataset.sx || 0);
+            const sy = parseFloat(el.dataset.sy || 0);
+            const sw = parseFloat(el.dataset.sw || 120);
+            const sh = parseFloat(el.dataset.sh || 58);
+            // bay center in SVG coordinates
+            const center = svgPointToClient(sx + sw/2, sy + sh/2);
+            const tl = svgPointToClient(sx, sy);
+            const tr = svgPointToClient(sx + sw, sy);
+            if (!center || !tl || !tr) return;
+            const centerPx = center.x - containerRect.left;
+            // compute width from bay width but clamp
+            const widthPx = Math.min(Math.max(120, tr.x - tl.x), 220);
+            // apply width first so measured height is accurate
+            el.style.width = Math.round(widthPx) + 'px';
+            // give the element natural height then measure
+            el.style.height = 'auto';
+            const elRect = el.getBoundingClientRect();
+            const heightPx = Math.max(110, elRect.height);
+            el.style.height = Math.round(heightPx) + 'px';
+            // center overlay at bay center
+            el.style.left = Math.round(centerPx - widthPx/2) + 'px';
+            el.style.top = Math.round(center.y - containerRect.top - heightPx/2) + 'px';
+        });
+    }
+
+    // Run on load and resize
+    positionOverlays();
+    window.addEventListener('resize', () => positionOverlays());
+    window.addEventListener('orientationchange', () => setTimeout(positionOverlays, 200));
+});
+</script>
+
+{% endblock %}

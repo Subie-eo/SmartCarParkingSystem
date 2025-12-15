@@ -1,0 +1,25 @@
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Subject: Password reset on localhost:8000
+From: eliasombonya@gmail.com
+To: eliasombonya@gmail.com
+Date: Sun, 14 Dec 2025 08:21:13 -0000
+Message-ID: <176570047344.352.3979387439033540537@DESKTOP-P0NBE8N>
+
+
+You're receiving this email because you requested a password reset for your user account at localhost:8000.
+
+Please go to the following page and choose a new password:
+
+http://localhost:8000/accounts/reset/OQ/d0ssvd-b2cdc1e485b1bc446c60a67d4069745e/
+
+In case you’ve forgotten, you are: eliasombonya@gmail.com
+
+Thanks for using our site!
+
+The localhost:8000 team
+
+
+
+-------------------------------------------------------------------------------

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<!--
+    Base template for CarParking project.
+    - Provides site-wide layout (navbar, footer, message area)
+    - Loads Bootstrap and the project's `assets/css/custom.css`
+    - Child templates should override the `content`, `extra_css`, and `extra_js` blocks
+-->
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Dynamic Title Block -->
+    <title>{% block title %}{{ SITE_NAME }} Management System{% endblock %}</title>
+    
+    <!-- Bootstrap CSS (for layout and components) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Tailwind CSS was removed from the global layout to avoid conflicts with Bootstrap; keep it only in templates that need it -->
+    
+    <style>
+        /* Apply the deep navy background consistent with the Login/Register pages */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
+            background-color: #0f172a; /* Deep Navy */
+            color: #d1d5db; /* Light Gray text */
+            transition: opacity 0.5s ease; /* Ensure the entire body supports transitions */
+        }
+        /* Custom styles for the landing page cards (retained for consistency) */
+        .card-gradient-1 {
+            background: linear-gradient(135deg, #4f46e5 0%, #1e3a8a 100%);
+        }
+        .card-gradient-2 {
+            background: linear-gradient(135deg, #10b981 0%, #065f46 100%);
+        }
+        /* Style for standard navigation links */
+        .nav-link {
+            color: #d1d5db; /* Default color */
+            transition: color 0.2s;
+        }
+        .nav-link:hover {
+            color: #f59e0b; /* Amber hover effect */
+        }
+        /* Style for the fixed scroll indicator */
+        #scroll-progress {
+            height: 3px;
+            background: #f59e0b; /* Amber color */
+            width: 0%;
+            position: fixed;
+            top: 0;
+            z-index: 60; /* Above the navbar */
+            transition: background-color 0.3s;
+        }
+        /* Enhanced button styling for glow effect */
+        .glow-button {
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .glow-button.bg-green-600:hover {
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); /* Green glow */
+        }
+        .glow-button.bg-red-600:hover {
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.6); /* Red glow */
+        }
+        /* Ensure main content is not hidden behind the sticky navbar */
+        main { padding-top: 72px; }
+    </style>
+    <!-- Custom CSS (append version to bypass cache) -->
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v={{ ASSET_VERSION }}">
+    <link rel="icon" href="{% static 'img/logo.svg' %}" type="image/svg+xml">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- BEAUTIFUL FEATURE 1: Scroll Progress Indicator -->
+    <div id="scroll-progress"></div>
+
+    <!-- Navigation Header (Fixed/Sticky) -->
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'home' %}">
+                <img src="{% static 'img/logo.svg' %}" alt="{{ SITE_NAME }} logo">{{ SITE_NAME }}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarMain">
+                {% block navbar_content %}
+                <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#services">Services</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#about">About Us</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'parking:driver_slots' %}">Book Slot</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+                </ul>
+                {% endblock %}
+
+                <ul class="navbar-nav ms-auto mb-2 mb-md-0 align-items-center">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item d-none d-sm-block me-2 text-muted">Welcome, <strong class="text-white">{{ user.username }}</strong></li>
+                        {% if user.is_staff or user.is_superuser %}
+                            <li class="nav-item"><a class="nav-link text-danger" href="{% url 'admin_dashboard' %}">Admin Dashboard</a></li>
+                        {% else %}
+                            <li class="nav-item"><a class="nav-link text-info" href="{% url 'driver_dashboard' %}">Dashboard</a></li>
+                        {% endif %}
+
+                        <!-- Account dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Account
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
+                                <li><a class="dropdown-item" href="{% url 'driver_update' %}">Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'parking:past_reservations' %}">My Reservations</a></li>
+                                {% if user.is_staff or user.is_superuser %}
+                                    <li><a class="dropdown-item" href="{% url 'parking:admin_activities' %}">Admin Activities</a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">Logout</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+                        <li class="nav-item"><a class="btn btn-success btn-sm ms-2" href="{% url 'register' %}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages Block (Using full message tags for styling) -->
+    <div class="max-w-7xl mx-auto px-4 mt-4">
+        {% for message in messages %}
+            <!-- Enhanced message styling consistent with dark theme -->
+            <div class="p-4 rounded-lg mb-2 text-white font-medium 
+                {% if 'success' in message.tags %}bg-green-600 shadow-md shadow-green-500/30
+                {% elif 'error' in message.tags %}bg-red-600 shadow-md shadow-red-500/30
+                {% elif 'warning' in message.tags %}bg-yellow-600 shadow-md shadow-yellow-500/30
+                {% else %}bg-blue-600 shadow-md shadow-blue-500/30{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Main Content Block (BEAUTIFUL FEATURE 2: Fade-in Transition) -->
+    <main class="min-h-screen opacity-0 transition-opacity duration-700 ease-out" id="main-content">
+        <!-- All child templates insert their content here -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-700 mt-12">
+        <div class="max-w-7xl mx-auto px-4 py-8 text-center text-gray-400">
+            <p>&copy; 2025 {{ SITE_NAME }}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- BEAUTIFUL FEATURE 3: JavaScript for Scroll Indicator and Content Fade-in -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const progressBar = document.getElementById('scroll-progress');
+            const mainContent = document.getElementById('main-content');
+            
+            // Fade-in main content on load
+            mainContent.classList.remove('opacity-0');
+
+            // Scroll Progress Function
+            window.addEventListener('scroll', () => {
+                const scrollTotal = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                if (scrollTotal > 0) {
+                    const scrolled = document.documentElement.scrollTop;
+                    const progress = (scrolled / scrollTotal) * 100;
+                    progressBar.style.width = progress + '%';
+                }
+            });
+        });
+    </script>
+        <!-- Navbar active link helper -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function(){
+                try{
+                    const links = document.querySelectorAll('.navbar .nav-link');
+                    links.forEach(a=>{
+                        try{
+                            // Normalize
+                            const href = a.getAttribute('href');
+                            if(!href) return;
+                            if(window.location.pathname === href || window.location.pathname.startsWith(href)){
+                                a.classList.add('active');
+                            }
+                        }catch(e){}
+                    });
+                }catch(e){}
+            });
+        </script>
+        <!-- Toast container for JS to push notifications -->
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
+            <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+        </div>
+
+    <!-- Bootstrap JS bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Site JS (append version to bypass cache) -->
+        <script src="{% static 'js/site.js' %}?v={{ ASSET_VERSION }}"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

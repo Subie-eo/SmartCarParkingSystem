@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="SmartPark logo">
+  <rect width="64" height="64" rx="12" fill="#0b1220"/>
+  <path d="M16 34v-8c0-6 6-10 12-10s12 4 12 10v8" fill="#f59e0b"/>
+  <circle cx="28" cy="30" r="3" fill="#0b1220"/>
+  <circle cx="40" cy="30" r="3" fill="#0b1220"/>
+  <text x="10" y="56" font-family="Inter, Arial" font-size="10" fill="#94a3b8">SmartPark</text>
+</svg>

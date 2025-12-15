@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Booking Status — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center min-vh-75 py-5">
+    <div class="card bg-secondary text-white shadow-lg border-warning" style="max-width:680px; width:100%;">
+        <div class="card-body text-center p-4">
+            <h1 class="h3 fw-bold mb-2">Booking Status</h1>
+
+            <div class="my-3">
+                <p class="mb-1 small text-muted">Slot: <span class="fw-monospace text-warning">{{ booking.slot.slot_id }}</span></p>
+                <p class="mb-0 small text-muted">Fee Due: <span class="fw-bold text-success">KES {{ booking.total_fee }}</span></p>
+            </div>
+
+            {% if booking.payment_status == 'PAID' %}
+                <div class="my-4">
+                    <div class="display-6 text-success mb-3">✓</div>
+                    <h2 class="h5 text-success mb-2">Payment Confirmed!</h2>
+                    <p class="small text-muted">Your spot is secured until {{ booking.end_time|date:"DATETIME_FORMAT" }}.
+                    <br/>M-Pesa Receipt: <code class="text-white">{{ booking.mpesa_receipt_no|default:"..." }}</code></p>
+                    <a href="{% url 'parking:driver_slots' %}" class="btn btn-warning mt-3">Back to Dashboard</a>
+                </div>
+
+            {% elif booking.payment_status == 'PENDING' %}
+                <div id="status-container">
+                    <div class="spinner-border text-warning my-3" role="status"><span class="visually-hidden">Loading...</span></div>
+                    <h2 class="h5 text-warning mb-2">Awaiting M-Pesa Payment</h2>
+                    <p class="small text-muted mb-3">Please complete the payment on your mobile device. Status will update automatically once M-Pesa sends confirmation.</p>
+
+                    <div class="d-flex justify-content-center gap-2">
+                        <a id="refresh-btn" href="{% url 'parking:booking_status' booking.id %}" class="btn btn-warning">Check Status (Refresh)</a>
+                        <form method="post" action="{% url 'parking:cancel_booking' booking.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-light">Cancel Booking</button>
+                        </form>
+                    </div>
+
+                    <p class="small text-muted mt-3">You will be returned to the dashboard in <span id="countdown">10</span>s. <a href="{% url 'parking:driver_slots' %}">Return now</a></p>
+                </div>
+
+                <script>
+                (function(){
+                    var bookingId = {{ booking.id }};
+                    var pollInterval = 3000; // ms
+                    var redirectSeconds = 10;
+                    var countdownEl = null;
+                    var statusEl = null;
+                    var checkTimer = null;
+                    var redirectTimer = null;
+
+                    function startCountdownAndRedirect() {
+                        var seconds = redirectSeconds;
+                        countdownEl = document.getElementById('countdown');
+                        if (countdownEl) countdownEl.textContent = seconds;
+                        redirectTimer = setInterval(function(){
+                            seconds -= 1;
+                            if (countdownEl) countdownEl.textContent = seconds;
+                            if (seconds <= 0) {
+                                clearInterval(redirectTimer);
+                                window.location.href = "{% url 'parking:driver_slots' %}";
+                            }
+                        }, 1000);
+                    }
+
+                    function handlePaid(data) {
+                        statusEl = document.getElementById('status-container');
+                        if (!statusEl) return;
+                        statusEl.innerHTML = `
+                            <div class="text-success my-3">✓</div>
+                            <h2 class="h5 text-success mb-2">Payment Confirmed!</h2>
+                            <p class="small text-muted mb-2">Your spot is secured. M-Pesa Receipt: <code class="text-white">${data.mpesa_receipt_no || '...'}</code></p>
+                            <p class="small text-muted mt-2">You will be returned to the dashboard in <span id="countdown">10</span>s. <a href="{% url 'parking:driver_slots' %}">Return now</a></p>
+                        `;
+                        startCountdownAndRedirect();
+                    }
+
+                    function pollStatus() {
+                        fetch(`{% url 'parking:booking_status_api' 0 %}`.replace('/0/', '/' + bookingId + '/'))
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.payment_status === 'PAID') {
+                                    clearInterval(checkTimer);
+                                    handlePaid(data);
+                                }
+                            }).catch(err => {
+                                console.error('Poll error', err);
+                            });
+                    }
+
+                    // Start polling and immediate check
+                    checkTimer = setInterval(pollStatus, pollInterval);
+                    pollStatus();
+                    startCountdownAndRedirect();
+                })();
+                </script>
+
+            {% else %}
+                <div class="my-4">
+                    <div class="display-6 text-danger mb-3">✖</div>
+                    <h2 class="h5 text-danger mb-2">Payment Failed / Expired</h2>
+                    <p class="small text-muted mb-3">The transaction was not completed or has expired. Please try booking again.</p>
+                    <a href="{% url 'parking:driver_slots' %}" class="btn btn-warning">Try Booking Again</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

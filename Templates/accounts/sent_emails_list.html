@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Saved Emails - {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <h2 class="text-2xl font-bold mb-4">Saved Emails</h2>
+    {% if not files %}
+        <p class="text-slate-400">No saved emails found.</p>
+    {% else %}
+        <ul class="list-disc pl-6">
+            {% for f in files %}
+            <li class="mb-2">
+                <a href="{% url 'sent_email_detail' f.name %}" class="text-amber-500 font-medium">{{ f.name }}</a>
+                <span class="text-slate-400"> — {{ f.size }} bytes</span>
+            </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endblock %}

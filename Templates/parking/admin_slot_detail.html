@@ -1,0 +1,67 @@
+<!-- Template Name: Admin Slot Detail (CRUD - Update/Delete) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ header_title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}?v={{ ASSET_VERSION }}">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        input, select { @apply p-2 border border-slate-600 rounded-lg shadow-sm bg-slate-800 text-white focus:border-amber-400; }
+        .pop-button { background-color: #f59e0b; box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.5); transition: all 0.3s; }
+        .pop-button:hover { background-color: #d97706; transform: translateY(-1px); }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="max-w-xl mx-auto bg-slate-800 p-8 rounded-xl shadow-2xl border border-amber-500/50">
+        <h1 class="text-3xl font-extrabold text-amber-400 mb-6 border-b border-slate-700 pb-3">{{ header_title }}</h1>
+        
+        <!-- Messages Section -->
+        {% include 'parking/messages.html' %} 
+
+        <!-- Update Form (U) -->
+        <h2 class="text-xl font-bold text-white mb-4">Update Slot Details</h2>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <!-- Display slot_id as read-only field and include hidden input so the value is posted -->
+            <div class="flex flex-col">
+                <label class="mb-1 text-sm font-medium text-slate-400">Slot ID</label>
+                <input type="text" value="{{ slot.slot_id }}" class="cursor-not-allowed" disabled>
+                <input type="hidden" name="slot_id" value="{{ slot.slot_id }}">
+            </div>
+            
+            {% for field in form %}
+                <!-- Skip slot_id as it is the primary key and should not be editable after creation -->
+                {% if field.name != 'slot_id' %}
+                    <div class="flex flex-col">
+                        <label for="{{ field.id_for_label }}" class="mb-1 text-sm font-medium text-slate-400">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}<p class="text-xs text-red-400 mt-1">{{ field.errors }}</p>{% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+            
+            <button type="submit" class="pop-button text-slate-900 font-semibold py-2 w-full rounded-lg mt-6">
+                Save Changes (Update)
+            </button>
+        </form>
+
+        <!-- Delete Section (D) -->
+        <div class="mt-8 pt-6 border-t border-slate-700">
+            <h2 class="text-xl font-bold text-red-400 mb-4">Danger Zone</h2>
+            <p class="text-slate-400 mb-4">Permanently delete this parking slot from the system inventory.</p>
+            <form method="post">
+                {% csrf_token %}
+                <!-- Hidden input confirms the delete action to the view -->
+                <button type="submit" name="delete" value="1" 
+                        class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition duration-150">
+                    Delete Slot (D)
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
