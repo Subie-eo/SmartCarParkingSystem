@@ -42,10 +42,15 @@ def register_view(request):
                 return redirect('admin_dashboard')
             return redirect('driver_dashboard')
         else:
-            # Display field-specific errors
+            # Display field-specific errors. Render non-field errors without the
+            # internal '__all__' key so user-facing messages are clean.
             for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
+                if field == '__all__':
+                    for error in errors:
+                        messages.error(request, f"{error}")
+                else:
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
     else:
         form = RegistrationForm()
     return render(request, 'accounts/register.html', {'form': form})
@@ -87,10 +92,15 @@ def login_view(request):
                 return redirect('admin_dashboard')
             return redirect('driver_dashboard')
         else:
-            # Display field-specific errors
+            # Display field-specific errors. Show non-field errors without the
+            # internal '__all__' label.
             for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
+                if field == '__all__':
+                    for error in errors:
+                        messages.error(request, f"{error}")
+                else:
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
     else:
         form = LoginForm()
     return render(request, 'accounts/login.html', {'form': form})
@@ -201,10 +211,15 @@ def driver_update_profile(request):
             messages.success(request, "Your profile has been updated successfully.")
             return redirect('driver_dashboard')
         else:
-            # Display field-specific errors only
+            # Display field-specific errors only. Non-field errors should be
+            # shown without the internal '__all__' key.
             for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
+                if field == '__all__':
+                    for error in errors:
+                        messages.error(request, f"{error}")
+                else:
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
     else:
         form = DriverUpdateForm(instance=request.user)
 

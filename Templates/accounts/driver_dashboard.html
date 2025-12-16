@@ -211,18 +211,13 @@
                         </div>
                     {% endfor %}
                 {% else %}
-                    {# Render placeholder slots so the map looks populated in dev #}
-                    <div class="level-row">
-                        <div class="level-grid">
-                        {% for i in placeholder_slots %}
-                            <div class="slot-box free placeholder" data-slot-id="P{{ i }}">
-                                <div class="slot-id">P{{ i }}</div>
-                                <div class="slot-status"><strong>FREE</strong></div>
-                                <div class="small text-muted" style="margin-bottom:10px;">Regular</div>
-                                <div class="slot-action"><a href="#" class="book-btn">Book</a></div>
-                            </div>
-                        {% endfor %}
-                        </div>
+                    <div class="text-center py-6">
+                        <p class="text-muted">No parking slots are defined yet.</p>
+                        {% if user.is_authenticated %}
+                            {% if user.is_staff or user.is_superuser %}
+                                <a href="{% url 'parking:admin_slot_list' %}" class="btn btn-sm btn-warning mt-2">Create Parking Slots</a>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 {% endif %}
             </div>

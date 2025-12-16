@@ -2,6 +2,7 @@ import base64
 import uuid
 import threading
 import time
+from datetime import timedelta
 import requests
 from django.conf import settings
 from django.utils import timezone
@@ -12,22 +13,23 @@ from parking.models import Booking
 
 
 class MpesaClient:
-        """Mpesa client that supports Safaricom Daraja OAuth and STK Push.
+    """Mpesa client that supports Safaricom Daraja OAuth and STK Push.
 
-        Behavior summary:
-        - Reads credentials from Django `settings` (typically via `.env`).
-        - When `MPESA_SIMULATE=True` the client schedules a small background task
-            that marks a booking PAID after a delay; no external HTTP calls are made.
-        - When `MPESA_SIMULATE=False` the client performs OAuth against the
-            Daraja sandbox/production endpoint and posts an STK push request. All
-            outgoing requests and responses are logged for easier debugging.
+    Behavior summary:
+    - Reads credentials from Django `settings` (typically via `.env`).
+    - When `MPESA_SIMULATE=True` the client schedules a small background task
+      that marks a booking PAID after a delay; no external HTTP calls are made.
+    - When `MPESA_SIMULATE=False` the client performs OAuth against the
+      Daraja sandbox/production endpoint and posts an STK push request. All
+      outgoing requests and responses are logged for easier debugging.
 
-        Notes:
-        - Phone numbers are normalized to the `2547XXXXXXXX` format by
-            `_normalize_phone()` before being sent to Safaricom.
-        - The client attempts to save `checkout_request_id` to the Booking record
-            (best-effort) so the UI and webhooks can correlate results.
-        """
+    Notes:
+    - Phone numbers are normalized to the `2547XXXXXXXX` format by
+      `_normalize_phone()` before being sent to Safaricom.
+    - The client attempts to save `checkout_request_id` to the Booking record
+      (best-effort) so the UI and webhooks can correlate results.
+    """
+
     def __init__(self):
         self.consumer_key = getattr(settings, 'MPESA_CONSUMER_KEY', '')
         self.consumer_secret = getattr(settings, 'MPESA_CONSUMER_SECRET', '')
@@ -56,7 +58,7 @@ class MpesaClient:
             self._token = token
             self._token_expiry = time.time() + expires_in
             return token
-        except Exception as e:
+        except Exception:
             logging.exception('Failed to fetch M-Pesa OAuth token from %s', url)
             raise
 
@@ -78,7 +80,7 @@ class MpesaClient:
         # Leading 7 (7xxxxxxxx)
         if len(p) == 9 and p.startswith('7'):
             return '254' + p
-        # Already in 2547... or 2541... form
+        # Already in 2547... form
         if p.startswith('254') and len(p) >= 12:
             return p
         # Leading plus
@@ -105,13 +107,13 @@ class MpesaClient:
                     b.payment_status = Booking.STATUS_PAID
                     b.mpesa_receipt_no = f"SIM-{booking_id}-{int(time.time())}"
                     if not b.end_time:
-                        b.end_time = timezone.now() + timezone.timedelta(hours=1)
+                        b.end_time = timezone.now() + timedelta(hours=1)
                     b.save()
                     slot = b.slot
                     slot.is_occupied = True
                     slot.save()
                 except Exception:
-                    pass
+                    logging.exception('Simulated confirmation failed for booking %s', booking_id)
 
             t = threading.Timer(5.0, _confirm)
             t.daemon = True
@@ -120,7 +122,6 @@ class MpesaClient:
             logging.info('MPESA simulate mode active: scheduled simulated confirmation for booking %s', booking_id)
             return checkout_request_id
 
-        # Real STK Push path
         # Real STK Push path
         token = self._get_oauth_token()
         url = f"{self.api_base.rstrip('/')}/mpesa/stkpush/v1/processrequest"

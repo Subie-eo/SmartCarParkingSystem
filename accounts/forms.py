@@ -69,12 +69,17 @@ class RegistrationForm(UserCreationForm):
 # 2. Login Form
 # ------------------------------------------------
 class LoginForm(AuthenticationForm):
-    username = forms.CharField(
+    # The project uses email as the USERNAME_FIELD. AuthenticationForm expects
+    # a field named `username` — expose it as an EmailField with the correct
+    # widget so the authentication pipeline receives the email under the
+    # expected name.
+    username = forms.EmailField(
         label='Email',
         max_length=254,
         widget=forms.EmailInput(attrs={
             'autofocus': True,
-            'class': 'w-full p-2 border border-gray-300 rounded-lg'
+            'class': 'w-full p-2 border border-gray-300 rounded-lg',
+            'autocomplete': 'email'
         })
     )
     
@@ -83,8 +88,16 @@ class LoginForm(AuthenticationForm):
         strip=False,
         widget=forms.PasswordInput(attrs={
             'class': 'w-full p-2 border border-gray-300 rounded-lg'
+            ,'autocomplete': 'current-password'
         })
     )
+
+    def clean_username(self):
+        """Normalize the email (USERNAME_FIELD) to lowercase before authentication."""
+        username = self.cleaned_data.get('username')
+        if username:
+            return username.lower()
+        return username
 
 # ------------------------------------------------
 # 3. Driver Update Form

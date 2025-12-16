@@ -309,8 +309,6 @@ def available_slots_view(request):
         'svg_slots': _compute_svg_slots(all_slots),
         'slots_by_level': slots_by_level,
         'ordered_slots_by_level': ordered_slots_by_level,
-        # Placeholder slots for development when DB has no entries
-        'placeholder_slots': list(range(1, 13)) if all_slots.count() == 0 else [],
     })
 
 

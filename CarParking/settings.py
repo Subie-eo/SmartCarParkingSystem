@@ -21,7 +21,7 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 # FIXED: Provide default hosts for local development
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='127.0.0.1,localhost',
+    default='127.0.0.1,localhost,testserver',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
@@ -210,6 +210,15 @@ MPESA_CALLBACK_URL = config('MPESA_CALLBACK_URL', default=config('CALLBACK_URL',
 
 # Optional secret to validate incoming MPesa callbacks (set in .env and in the Daraja sandbox if supported)
 MPESA_CALLBACK_SECRET = config('MPESA_CALLBACK_SECRET', default='')
+
+# CSRF: trusted origins for deployments where the Host/Origin may include
+# an explicit scheme or different hostname (common in Docker, tunnelling,
+# or when using an IP address). Allow overriding via env var.
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='http://127.0.0.1:8000,http://localhost:8000',
+    cast=lambda v: [s.strip() for s in v.split(',') if s.strip()]
+)
 
 # Expire sessions on browser close so users are logged out when they close the browser
 SESSION_EXPIRE_AT_BROWSER_CLOSE = config('SESSION_EXPIRE_AT_BROWSER_CLOSE', default=True, cast=bool)

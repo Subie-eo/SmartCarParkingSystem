@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from CarParking.models import ParkingSlot
+from parking.models import ParkingSlot
 
 
 class Command(BaseCommand):
@@ -31,7 +31,7 @@ class Command(BaseCommand):
                 slot_name = f"Level {level} Spot {i:03d}" if level else f"Spot {i:03d}"
                 defaults = {
                     'slot_name': slot_name,
-                    'pricing_category': ParkingSlot.PRICING_STANDARD if i % 5 != 0 else ParkingSlot.PRICING_PREMIUM,
+                    'pricing_category': 'Regular',
                     'is_occupied': False,
                     'level': level,
                 }
